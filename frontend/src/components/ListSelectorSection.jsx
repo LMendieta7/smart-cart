@@ -24,11 +24,13 @@ import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 
 
+import DeleteCheckedDialog from "./dialogs/DeleteCheckedDialog";
 import ListDialog from "./dialogs/ListDialog";
 import DeleteListDialog from "./dialogs/DeleteListDialog";
 import ListIcon from '@mui/icons-material/List';
 
-function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail, onUncheckAll }){
+function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail, onUncheckAll, onDeleteChecked }){
+    const [deleteCheckedTarget, setDeleteCheckedTarget] = useState(null);
     const [isUnchecking, setIsUnchecking] = useState(false);
     const [uncheckError, setUncheckError] = useState("");
 
@@ -226,6 +228,13 @@ function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail,
                 />
             )}
             
+            {deleteCheckedTarget && (
+                <DeleteCheckedDialog
+                    target={deleteCheckedTarget}
+                    onClose={() => setDeleteCheckedTarget(null)}
+                    onDelete={onDeleteChecked}
+                />
+            )}
             <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -259,7 +268,13 @@ function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail,
                     <ListItemText>Uncheck all</ListItemText>
                 </MenuItem>
 
-                 <MenuItem >
+                 <MenuItem
+                    disabled={isUnchecking || !selectedListId || shoppingListDetail?.id !== selectedListId || !shoppingListDetail?.checked_count}
+                    onClick={() => {
+                        setDeleteCheckedTarget({ id: selectedListId, name: shoppingListDetail.name, count: shoppingListDetail.checked_count });
+                        handleCloseMenu();
+                    }}
+                 >
                     <ListItemIcon>
                         <DeleteIcon fontSize="small" sx={{color:"darkGreen"}}></DeleteIcon>
         

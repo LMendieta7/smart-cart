@@ -139,3 +139,14 @@ export async function uncheckAllShoppingListItems(shoppingListId) {
   }
   return response.json();
 }
+
+export async function deleteCheckedShoppingListItems(shoppingListId) {
+  const response = await fetch(
+    `${API_BASE_URL}/shopping-lists/${shoppingListId}/checked-items`,
+    { method: "DELETE" },
+  );
+  if (!response.ok) {
+    throw new Error("Could not delete checked items. Please try again.");
+  }
+  return response.json();
+}
