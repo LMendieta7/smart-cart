@@ -39,6 +39,12 @@ Smart Grocery will use:
   default units. Product names do not belong in preferences.
 - Future personal products that users can create, reuse, rename, and delete.
 - Future list membership so users can share selected shopping lists.
+- Future WebSocket updates for shared lists, with alerts showing who added,
+  edited, or checked off an item, plus persistent list activity history.
+
+The [prioritized feature roadmap](docs/smart-grocery-requirements.md#prioritized-feature-roadmap)
+puts accounts and list permissions before real-time collaboration. Notifications
+when the app is closed are a separate, later feature.
 
 The initial version remains simple and does not require authentication.
 Authentication, user ownership, and sharing will be added when the core

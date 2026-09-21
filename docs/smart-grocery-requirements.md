@@ -21,6 +21,50 @@ entire personal catalog. Public self-registration is not the default.
 This decision supersedes older descriptions below where they conflict. The
 current frontend uses React JavaScript and Material UI.
 
+## Prioritized Feature Roadmap
+
+These are planned features, not a description of what is already implemented.
+Build them on the existing shopping-list workflow in this order:
+
+1. **Private accounts and invitations:** Allow the owner to approve access to
+   the app. Users see only their own lists and lists shared with them. Preserve
+   existing shopping data when introducing ownership.
+2. **Quick custom items:** Add an item even when it is missing from the catalog.
+   Offer an optional way to save it as a reusable personal product.
+3. **Shared lists:** Invite people to a specific list with owner, editor, or
+   viewer permissions. Allow the owner to revoke access.
+4. **Real-time updates and activity:** Use WebSockets to deliver saved list
+   changes to authorized members while the app is open. Update items, quantities,
+   checkmarks, and totals automatically. Show a small in-app alert identifying
+   the person and action, such as “Leo added milk · 2 gallons” or “Maria checked
+   off bread.” Attribute changes to the actual person, whether owner or editor.
+   Show who added each item and provide a persistent list activity history.
+5. **Shopping experience:** Group items by category, move checked items to the
+   bottom, simplify quantity changes, and offer Undo after deleting an item.
+6. **Saved preferences:** Remember favorite products, preferred units, and
+   optional prices or images without exposing personal preferences to other
+   list members. Keep prices optional.
+7. **Poor-connectivity support:** Keep lists readable offline, clearly indicate
+   pending changes, and synchronize them when the connection returns.
+
+### Real-time behavior
+
+- Implement accounts and list membership before WebSocket delivery.
+- Validate edit permissions in the API, persist the change and its activity
+  record together, and then broadcast the saved change to that list's members.
+- Authenticate connections, check list access before subscribing, and stop
+  delivery when access is revoked. A list ID alone does not grant access.
+- Reload the current list after reconnecting so missed messages do not leave
+  stale data. Handle duplicate events without repeating alerts.
+- Handle simultaneous edits explicitly; WebSockets alone do not prevent one
+  person's change from overwriting another's.
+- Activity alerts describe list changes; a separate chat feature is not part
+  of this milestone.
+- Push notifications when the app is closed are a later, separate feature.
+
+This roadmap extends the original Phase 1 scope. WebSockets and collaboration
+remain outside that original phase but are planned after accounts and sharing.
+
 ## Agreed Direction
 
 - Build the real app around persisted product data instead of expanding fake in-memory inventory.
