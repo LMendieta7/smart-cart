@@ -1,3 +1,5 @@
+import Alert from "@mui/material/Alert";
+import useSaveAction from "../../hooks/useSaveAction";
 import { useState } from "react";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -12,6 +14,8 @@ import Box from "@mui/material/Box";
 
 
 function ListDialog({list = null, onClose, onSave}){
+    const { save, isSaving, error } = useSaveAction();
+
     const [listName, setListName] = useState(list?.name ?? "");
     const isEditing = Boolean(list);
 
@@ -21,8 +25,7 @@ function ListDialog({list = null, onClose, onSave}){
             name: listName.trim()
         };
 
-        await onSave(list);
-        onClose();
+        await save(async () => { await onSave(list); onClose(); });
     }
 
 
@@ -30,7 +33,7 @@ function ListDialog({list = null, onClose, onSave}){
 
         <Dialog
             open
-            onClose={onClose}
+            onClose={isSaving ? undefined : onClose}
             fullWidth
             maxWidth="xs"
             slotProps={{
@@ -76,15 +79,16 @@ function ListDialog({list = null, onClose, onSave}){
                 />
             </FormControl>
             
+            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2, bgcolor: "inherit" }}>
 
-                <Button type="button" size="medium" onClick={onClose}>
+                <Button disabled={isSaving} type="button" size="medium" onClick={onClose}>
                     Cancel
                 </Button>
 
-                <Button type="submit"  variant="contained" size="medium">
+                <Button disabled={isSaving} type="submit"  variant="contained" size="medium">
                     {isEditing ? "Save" : "Create"}
                 </Button>
             </DialogActions>

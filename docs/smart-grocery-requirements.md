@@ -4,6 +4,23 @@ Smart Grocery is a modern web app for building grocery lists, estimating grocery
 
 The project should stay simple enough for continuous Agile development. Build useful pieces early, avoid overengineering, and keep each phase small.
 
+## Current Access Decision
+
+The product will be an invitation-only SaaS application for the owner, family,
+and explicitly approved people. Fix reliability first; implement accounts in
+the next milestone. Account approval and access to a specific list are separate
+permissions. All private data access must be enforced in the API, not only the UI.
+
+The accounts milestone must preserve existing lists by assigning them to the
+owner, replace globally unique list names with an owner-aware policy, protect
+the shared catalog, and include tests preventing access across users. Follow
+with personal products, per-user preferences, list membership and revocable
+invitations. Sharing a list must not share the owner's private preferences or
+entire personal catalog. Public self-registration is not the default.
+
+This decision supersedes older descriptions below where they conflict. The
+current frontend uses React JavaScript and Material UI.
+
 ## Agreed Direction
 
 - Build the real app around persisted product data instead of expanding fake in-memory inventory.

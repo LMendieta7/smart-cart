@@ -3,6 +3,8 @@ import ProductSearch from "../components/ProductSearch";
 import ShoppingList from "../components/ShoppingList";
 import ListSelectorSection from "../components/ListSelectorSection";
 import Header from "../components/Header";
+import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -13,8 +15,11 @@ import {
   getShoppingListDetail,
   updateShoppingListItem,
   uncheckAllShoppingListItems,
-  deleteCheckedShoppingListItems
+  deleteCheckedShoppingListItems,
+  clearShoppingList
 } from "../services/shoppingListApi";
+
+import { createListRequests } from "../services/listRequests";
 
 import { getAllCategories } from "../services/categoriesApi";
 
@@ -24,25 +29,23 @@ function HomePage() {
   const [shoppingListDetail, setShoppingListDetail] = useState(null);
   const [categories, setCategories] = useState([]);
 
+  const [reloadKey, setReloadKey] = useState(0);
+  const [loadError, setLoadError] = useState("");
+  const [requests] = useState(createListRequests);
+
   useEffect(() => {
-    async function loadShoppingListDetails() {
-      if (!selectedListId) {
-        setShoppingListDetail(null);
-        return;
-      }
+    if (!selectedListId) return;
+    return requests.load(
+      selectedListId,
+      () => getShoppingListDetail(selectedListId),
+      setShoppingListDetail,
+      (error) => setLoadError(error.message),
+    );
+  }, [selectedListId, reloadKey, requests]);
 
-      try {
-        const listDetails = await getShoppingListDetail(selectedListId);
-        setShoppingListDetail(listDetails);
-
-      } catch (error) {
-        console.error("Failed to load shopping list details:", error);
-      }
-    }
-
-    loadShoppingListDetails();
-
-  }, [selectedListId]);
+  function mutateList(listId, operation) {
+    return requests.mutate(listId, operation, setShoppingListDetail);
+  }
 
   useEffect(() => {
     async function loadAllCategories() {
@@ -50,70 +53,48 @@ function HomePage() {
         const categoryList = await getAllCategories();
         setCategories(categoryList);
       } catch (error) {
-        console.error("Failed to load categories:", error);
+        setLoadError(`Could not load categories: ${error.message}`);
       }
     }
 
     loadAllCategories();
-  }, []);
-
-  async function addProductToList(product) {
-    if (!selectedListId) {
-      return;
-    }
-
-
-    const itemRequest = {
-      product_id: product.id,
-      quantity: 1,
-    };
-
-    const updateDetail = await addProductToShoppingList(selectedListId, itemRequest);
-
-    setShoppingListDetail(updateDetail);
-
-    }
-
+  }, [reloadKey]);
 
   const handleListSelect = useCallback((listId) => {
+    if (!requests.select(listId)) return;
+    setShoppingListDetail(null);
+    setLoadError("");
     setSelectedListId(listId);
-    
-  }, []);
+  }, [requests]);
 
-  async function deleteItemFromList(itemId) {
-    if (!selectedListId) {
-        return;
-      }
-    const updateDetail = await deleteShoppingListItem(selectedListId, itemId);
-    setShoppingListDetail(updateDetail);
+  function addProductToList(product) {
+    return mutateList(selectedListId, () => addProductToShoppingList(selectedListId, { product_id: product.id, quantity: 1 }));
   }
 
-  async function handleUpdateListItem(itemId, request){
-    if (!selectedListId) {
-        return;
-    }
-    const updateItemList = await updateShoppingListItem(selectedListId, itemId, request)
-    setShoppingListDetail(updateItemList);
+  function deleteItemFromList(itemId) {
+    return mutateList(selectedListId, () => deleteShoppingListItem(selectedListId, itemId));
   }
 
-  async function handleDeleteChecked(listId) {
-    const updatedList = await deleteCheckedShoppingListItems(listId);
-    setShoppingListDetail((current) =>
-      current?.id === updatedList.id ? updatedList : current
-    );
+  function handleUpdateListItem(itemId, request) {
+    return mutateList(selectedListId, () => updateShoppingListItem(selectedListId, itemId, request));
   }
 
-  async function handleUncheckAll() {
-    if (!selectedListId) return;
-    const updatedList = await uncheckAllShoppingListItems(selectedListId);
-    setShoppingListDetail((current) =>
-      current?.id === updatedList.id ? updatedList : current
-    );
+  function handleDeleteChecked(listId) {
+    return mutateList(listId, () => deleteCheckedShoppingListItems(listId));
+  }
+
+  function handleClearList(listId) {
+    return mutateList(listId, () => clearShoppingList(listId));
+  }
+
+  function handleUncheckAll() {
+    return mutateList(selectedListId, () => uncheckAllShoppingListItems(selectedListId));
   }
 
   return (
     <>
-      <Header totalItemsCount={shoppingListDetail ? shoppingListDetail.total_count : "0"}
+      <Header estimatedTotal={shoppingListDetail?.estimated_total}
+              totalItemsCount={shoppingListDetail ? shoppingListDetail.total_count : "0"}
               checkedCount = {shoppingListDetail ? shoppingListDetail.checked_count : "0"}
       />
       <Box
@@ -124,6 +105,7 @@ function HomePage() {
           p: { xs: 1, sm: 2 },
         }}
       > 
+        {loadError && <Alert severity="error" action={<Button onClick={() => { setLoadError(""); setReloadKey((key) => key + 1); }}>Retry</Button>}>{loadError}</Alert>}
         <Stack spacing={0.7}>
         <ListSelectorSection 
           onSelectList={handleListSelect}
@@ -131,14 +113,16 @@ function HomePage() {
           shoppingListDetail={shoppingListDetail}
           onUncheckAll={handleUncheckAll}
           onDeleteChecked={handleDeleteChecked}
+          onClearList={handleClearList}
         />
-        {selectedListId && (
-          <ProductSearch onAddProductToList={addProductToList} />
+        {shoppingListDetail && (
+          <ProductSearch key={shoppingListDetail.id} onAddProductToList={addProductToList} />
         )}
        </Stack>
   
         {shoppingListDetail ? (
           <ShoppingList
+            key={shoppingListDetail.id}
             items={shoppingListDetail.items}
             onDeleteItem={deleteItemFromList}
             onUpdateListItem={handleUpdateListItem}
@@ -146,7 +130,7 @@ function HomePage() {
           />
         ) : (
           <Typography align="center" sx={{ color: "darkGreen", py: 6 }}>
-            Create a shopping list to get started.
+            {selectedListId ? (loadError ? "Could not load this list. Use Retry above." : "Loading shopping list…") : "Create a shopping list to get started."}
           </Typography>
         )}
       </Box>

@@ -8,7 +8,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 
-function Header({ checkedCount, totalItemsCount }) {
+function Header({ checkedCount, totalItemsCount, estimatedTotal }) {
   return (
     <AppBar component="header" position="sticky" sx={{bgcolor:"darkgreen"}}>
         <Toolbar>
@@ -32,12 +32,14 @@ function Header({ checkedCount, totalItemsCount }) {
                 backgroundColor: "rgba(255, 255, 255, 0.10)",
             }}
             >
+            {estimatedTotal != null && (
+              <>
             <Typography sx={{fontWeight: 700, 
                             fontSize: "0.95rem",
                             whiteSpace: "nowrap",
                         }}
             >
-                $0.00
+                {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(estimatedTotal))}
             </Typography>
             <Box
                 component="span"
@@ -50,6 +52,8 @@ function Header({ checkedCount, totalItemsCount }) {
                     flexShrink: 0,
                 }}
             />
+              </>
+            )}
             <Typography sx={{fontWeight: 700,
                             fontSize: "0.95rem",
                             whiteSpace: "nowrap",                      

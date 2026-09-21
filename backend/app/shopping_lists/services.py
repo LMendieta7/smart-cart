@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from backend.app.core.errors import DataConflict, commit_changes
+
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
@@ -103,6 +105,13 @@ class ShoppingListService:
         if product is None:
             return None
 
+        existing = self.db.scalar(select(ShoppingListItemTable).where(
+            ShoppingListItemTable.shopping_list_id == shopping_list_id,
+            ShoppingListItemTable.product_id == product.id,
+        ))
+        if existing is not None:
+            raise DataConflict("This product is already in the list. Edit its quantity instead.")
+
         item = ShoppingListItemTable(
             shopping_list_id=shopping_list.id,
             product_id=product.id,
@@ -116,8 +125,17 @@ class ShoppingListService:
             is_checked=False,
         )
         self.db.add(item)
-        self.db.commit()
+        commit_changes(self.db, "This change conflicts with existing data. The list name or product may already exist.")
 
+        return self.get_list_detail(shopping_list_id)
+
+    def clear_list(self, shopping_list_id: int):
+        if self.db.get(ShoppingListTable, shopping_list_id) is None:
+            return None
+        self.db.execute(delete(ShoppingListItemTable).where(
+            ShoppingListItemTable.shopping_list_id == shopping_list_id
+        ))
+        commit_changes(self.db, "Could not clear this list. Please refresh and try again.")
         return self.get_list_detail(shopping_list_id)
 
     def delete_checked(self, shopping_list_id: int):
@@ -129,7 +147,7 @@ class ShoppingListService:
                 ShoppingListItemTable.is_checked.is_(True),
             )
         )
-        self.db.commit()
+        commit_changes(self.db, "This change conflicts with existing data. The list name or product may already exist.")
         return self.get_list_detail(shopping_list_id)
 
     def uncheck_all(self, shopping_list_id: int):
@@ -141,7 +159,7 @@ class ShoppingListService:
             .where(ShoppingListItemTable.shopping_list_id == shopping_list_id)
             .values(is_checked=False)
         )
-        self.db.commit()
+        commit_changes(self.db, "This change conflicts with existing data. The list name or product may already exist.")
         return self.get_list_detail(shopping_list_id)
 
     def delete_item(self, shopping_list_id: int, item_id: int):
@@ -150,7 +168,7 @@ class ShoppingListService:
             return None
 
         self.db.delete(item)
-        self.db.commit()
+        commit_changes(self.db, "This change conflicts with existing data. The list name or product may already exist.")
 
         return self.get_list_detail(shopping_list_id)
 
@@ -161,10 +179,13 @@ class ShoppingListService:
 
         update_data = request.model_dump(exclude_unset=True)
 
+        if "category_id" in update_data and self.db.get(CategoryTable, update_data["category_id"]) is None:
+            raise DataConflict("Category not found. Choose an existing category.")
+
         for field, value in update_data.items():
             setattr(item, field, value)
 
-        self.db.commit()
+        commit_changes(self.db, "This change conflicts with existing data. The list name or product may already exist.")
 
         return self.get_list_detail(shopping_list_id)
 
@@ -176,7 +197,7 @@ class ShoppingListService:
         )
 
         self.db.add(shopping_list)
-        self.db.commit()
+        commit_changes(self.db, "This change conflicts with existing data. The list name or product may already exist.")
         self.db.refresh(shopping_list)
 
         return shopping_list
@@ -188,7 +209,7 @@ class ShoppingListService:
             return False
 
         self.db.delete(shopping_list)
-        self.db.commit()
+        commit_changes(self.db, "This change conflicts with existing data. The list name or product may already exist.")
         return True
 
     def update_list(self, shopping_list_id, request):
@@ -204,6 +225,6 @@ class ShoppingListService:
             for field, value in update_data.items():
                 setattr(shopping_list, field, value)
     
-            self.db.commit()
+            commit_changes(self.db, "This change conflicts with existing data. The list name or product may already exist.")
     
             return shopping_list

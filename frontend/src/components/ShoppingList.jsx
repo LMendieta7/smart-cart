@@ -1,3 +1,4 @@
+import Alert from "@mui/material/Alert";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Box from "@mui/material/Box";
@@ -11,6 +12,8 @@ import { useState } from "react";
 
 function ShoppingList({ items, onDeleteItem, onUpdateListItem, categories }) {
 
+    const [error, setError] = useState("");
+    const [pendingItems, setPendingItems] = useState(new Set());
     const [selectedItem, setSelectedItem] = useState(null);
    
 
@@ -20,7 +23,15 @@ function ShoppingList({ items, onDeleteItem, onUpdateListItem, categories }) {
     
     async function handleCheckbox(itemId, checked){
         
-        await onUpdateListItem(itemId, {is_checked: checked});
+        setPendingItems((current) => new Set(current).add(itemId));
+        setError("");
+        try {
+            await onUpdateListItem(itemId, {is_checked: checked});
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setPendingItems((current) => { const next = new Set(current); next.delete(itemId); return next; });
+        }
     }
 
     return (
@@ -31,6 +42,7 @@ function ShoppingList({ items, onDeleteItem, onUpdateListItem, categories }) {
                
             }}
         >
+            {error && <Alert severity="error">{error}</Alert>}
             <List
                 sx={{
                     p: 0,
@@ -69,6 +81,7 @@ function ShoppingList({ items, onDeleteItem, onUpdateListItem, categories }) {
                             }}
                         >
                             <Checkbox
+                                disabled={pendingItems.has(item.id)}
                                 checked={item.is_checked}
                                 onChange={(event) => handleCheckbox(item.id, event.target.checked)}
                                 size="small"

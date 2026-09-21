@@ -63,8 +63,8 @@ function ProductSearch({ onAddProductToList }) {
             setSearch("");
             setSuggestions([]);
             setError("");
-        } catch {
-            setError("Could not add product to the shopping list.");
+        } catch (error) {
+            setError(error.message);
         }
     }
     

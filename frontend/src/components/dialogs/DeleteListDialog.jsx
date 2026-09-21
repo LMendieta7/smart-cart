@@ -1,3 +1,5 @@
+import Alert from "@mui/material/Alert";
+import useSaveAction from "../../hooks/useSaveAction";
 import { 
     Box,
   Button, 
@@ -10,17 +12,18 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 
 function DeleteListDialog({selectedList, onClose, onDelete}) {
+    const { save, isSaving, error } = useSaveAction();
+
    
     async function handleConfirmDelete() {
-        await onDelete();
-        onClose();
+        await save(async () => { await onDelete(); onClose(); });
     }
     
     return (
         <Box>
         <Dialog
             open
-            onClose={onClose}
+            onClose={isSaving ? undefined : onClose}
             aria-labelledby="delete-dialog-title"
             aria-describedby="delete-dialog-description"
         >
@@ -41,12 +44,13 @@ function DeleteListDialog({selectedList, onClose, onDelete}) {
             >
                 This will permanently delete this list and all its items. This action cannot be undone.
             </DialogContentText>
+            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button type="button" size="medium" onClick={onClose}>
+            <Button disabled={isSaving} type="button" size="medium" onClick={onClose}>
                 Cancel
             </Button>
-            <Button
+            <Button disabled={isSaving}
                 type="button"
                 variant="contained"
                 color="error"

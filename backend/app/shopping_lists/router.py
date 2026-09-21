@@ -152,3 +152,11 @@ def delete_checked_items(
     if list_detail is None:
         raise HTTPException(status_code=404, detail="Shopping list not found")
     return list_detail
+
+
+@router.delete("/shopping-lists/{shopping_list_id}/items", response_model=ShoppingListDetailResponse)
+def clear_list_items(shopping_list_id: int, service: ShoppingListService = Depends(get_shopping_list_service)):
+    result = service.clear_list(shopping_list_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Shopping list not found")
+    return result

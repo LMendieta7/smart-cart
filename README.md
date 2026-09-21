@@ -8,6 +8,25 @@ data model that can later support user accounts and shared lists. The build
 plan lives in
 [docs/smart-grocery-requirements.md](docs/smart-grocery-requirements.md).
 
+## SaaS Access Direction
+
+Smart Grocery is intended to become an invitation-only SaaS app for the owner,
+family members (including a spouse), and other people the owner explicitly
+approves. Public self-registration is not the intended default.
+
+Accounts are the next milestone; the current development app does not yet
+provide authentication or private list access. Before wider use, add private
+accounts, enforce list ownership and membership on every API operation, and
+migrate existing lists to the owner's account. Separate permission to use the
+app from permission to access a particular list. Shared-list editors must not
+gain access to someone else's private lists, products, or preferences.
+
+Later milestones include personal products, saved preferences, and revocable
+list invitations with owner/editor/viewer permissions. Shared catalog products
+remain read-only for ordinary users. Future migrations must preserve existing
+shopping data. List names should be scoped to their owner (or allowed to repeat),
+not globally unique across users.
+
 ## Product Direction
 
 Smart Grocery will use:
@@ -82,6 +101,27 @@ The [API docs](http://127.0.0.1:8000/docs) are also available.
 
 To stop the frontend and backend, press `Ctrl+C` in each terminal. To stop
 the database, run `docker stop smart_grocery_postgres`.
+
+## Verification
+
+From the project root:
+
+```bash
+.venv/bin/python -m pytest backend/tests -q
+npm --prefix frontend test
+npm --prefix frontend run lint
+npm --prefix frontend run build
+```
+
+With the local PostgreSQL database running, exercise the API regressions against
+PostgreSQL as well:
+
+```bash
+SMART_CART_TEST_POSTGRES=1 .venv/bin/python -m pytest backend/tests/test_reliability_api.py -q
+```
+
+These PostgreSQL tests create temporary schemas and remove them afterward;
+they do not modify your saved lists.
 
 ## Current Structure
 

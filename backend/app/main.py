@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from backend.app.core.errors import DataConflict
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.products.router import router as product_router
@@ -16,6 +18,10 @@ def create_app() -> FastAPI:
         title="Smart Grocery API",
         version="0.1.0",
     )
+
+    @app.exception_handler(DataConflict)
+    async def data_conflict_handler(request, error):
+        return JSONResponse(status_code=409, content={"detail": str(error)})
 
     app.add_middleware(
         CORSMiddleware,

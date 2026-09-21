@@ -29,7 +29,7 @@ import ListDialog from "./dialogs/ListDialog";
 import DeleteListDialog from "./dialogs/DeleteListDialog";
 import ListIcon from '@mui/icons-material/List';
 
-function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail, onUncheckAll, onDeleteChecked }){
+function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail, onUncheckAll, onDeleteChecked, onClearList }){
     const [deleteCheckedTarget, setDeleteCheckedTarget] = useState(null);
     const [isUnchecking, setIsUnchecking] = useState(false);
     const [uncheckError, setUncheckError] = useState("");
@@ -67,8 +67,10 @@ function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail,
         onSelectList(newListId);
     }
         useEffect(() => {
+        let cancelled = false;
         async function loadShoppingLists() {
             const lists = await getAllShoppingLists();
+            if (cancelled) return;
 
             setShoppingLists(lists);
             if (lists.length > 0) {
@@ -77,7 +79,8 @@ function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail,
 
         }
 
-        loadShoppingLists();
+        loadShoppingLists().catch((error) => { if (!cancelled) setUncheckError(error.message); });
+        return () => { cancelled = true; };
     }, [onSelectList]);
 
     function handleOpenCreateListDialog(){
@@ -232,7 +235,7 @@ function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail,
                 <DeleteCheckedDialog
                     target={deleteCheckedTarget}
                     onClose={() => setDeleteCheckedTarget(null)}
-                    onDelete={onDeleteChecked}
+                    onDelete={deleteCheckedTarget.clear ? onClearList : onDeleteChecked}
                 />
             )}
             <Menu
@@ -251,7 +254,7 @@ function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail,
                     },
                 }}
             >
-                <MenuItem onClick={handleOpenEditListDialog}>
+                <MenuItem disabled={!selectedList} onClick={handleOpenEditListDialog}>
                     <ListItemIcon>
                         <EditIcon fontSize="small" sx={{color:"darkGreen"}}></EditIcon>
                     </ListItemIcon>
@@ -282,7 +285,13 @@ function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail,
                     <ListItemText>Delete checked</ListItemText>
                 </MenuItem>
                 <Divider sx={{ mx: 0.75, my: 0.25 }} />
-                <MenuItem >
+                <MenuItem
+                    disabled={isUnchecking || shoppingListDetail?.id !== selectedListId || !shoppingListDetail?.total_count}
+                    onClick={() => {
+                        setDeleteCheckedTarget({ id: selectedListId, name: shoppingListDetail.name, count: shoppingListDetail.total_count, clear: true });
+                        handleCloseMenu();
+                    }}
+                >
                     <ListItemIcon>
                         <ListIcon fontSize="small" sx={{color:"darkGreen"}}></ListIcon>
                     </ListItemIcon>
@@ -291,7 +300,7 @@ function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail,
 
                 <Divider sx={{ mx: 0.75, my: 0.25 }} />
                 
-                <MenuItem onClick={handleOpenDeleteListDialog}>
+                <MenuItem disabled={!selectedList} onClick={handleOpenDeleteListDialog}>
                     <ListItemIcon>
                        <DeleteIcon fontSize="small" color="error"></DeleteIcon>
                     </ListItemIcon>

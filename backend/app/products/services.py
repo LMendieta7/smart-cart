@@ -1,4 +1,5 @@
 from sqlalchemy import func, select
+from backend.app.core.errors import commit_changes
 from sqlalchemy.orm import Session
 
 from backend.app.categories.models import CategoryTable
@@ -58,8 +59,7 @@ class ProductService:
             category_id=category.id,
         )
         self.db.add(product)
-        self.db.flush()
-        self.db.commit()
+        commit_changes(self.db, "A product with this name already exists, or this product is still used by a shopping list.")
 
         return ProductResponse(
             id=product.id,
@@ -73,7 +73,7 @@ class ProductService:
             return None
 
         self.db.delete(product)
-        self.db.commit()
+        commit_changes(self.db, "A product with this name already exists, or this product is still used by a shopping list.")
         return product
 
     def update_product(self, product_id, request):
@@ -90,6 +90,6 @@ class ProductService:
         for field, value in update_data.items():
             setattr(product, field, value)
 
-        self.db.commit()
+        commit_changes(self.db, "A product with this name already exists, or this product is still used by a shopping list.")
         self.db.refresh(product)
         return product

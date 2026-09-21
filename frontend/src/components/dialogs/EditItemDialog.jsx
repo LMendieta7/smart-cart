@@ -1,3 +1,5 @@
+import Alert from "@mui/material/Alert";
+import useSaveAction from "../../hooks/useSaveAction";
 import { useState } from "react";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -21,6 +23,8 @@ const wholeQuantityUnits = new Set(["each", "pack", "dozen"]);
 
 
 function EditItemDialog({onClose, item, onDeleteItem, onUpdateListItem, categories}) {
+    const { save, isSaving, error } = useSaveAction();
+
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -107,20 +111,18 @@ function EditItemDialog({onClose, item, onDeleteItem, onUpdateListItem, categori
             return;
         }
 
-        await onUpdateListItem(item.id, updates);
-        onClose();
+        await save(async () => { await onUpdateListItem(item.id, updates); onClose(); });
     }
 
     async function handleDelete() {
-        await onDeleteItem(item.id);
-        onClose();
+        await save(async () => { await onDeleteItem(item.id); onClose(); });
     }
 
     return (
 
         <Dialog
             open
-            onClose={onClose}
+            onClose={isSaving ? undefined : onClose}
             fullScreen={isMobile}
             fullWidth
             maxWidth="xs"
@@ -322,11 +324,12 @@ function EditItemDialog({onClose, item, onDeleteItem, onUpdateListItem, categori
                     minRows={3}
                 />
             </FormControl>
+            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2, bgcolor: "inherit" }}>
 
-            <Button
+            <Button disabled={isSaving}
                 type="button"
                 variant="contained"
                 color="error"
@@ -336,11 +339,11 @@ function EditItemDialog({onClose, item, onDeleteItem, onUpdateListItem, categori
             >
                 Delete
             </Button>
-            <Button type="button" onClick={onClose} size="medium">
+            <Button disabled={isSaving} type="button" onClick={onClose} size="medium">
                 Cancel
             </Button>
 
-            <Button type="submit"  variant="contained" size="medium">
+            <Button disabled={isSaving} type="submit"  variant="contained" size="medium">
                 Save
             </Button>
             </DialogActions>
