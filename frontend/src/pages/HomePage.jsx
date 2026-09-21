@@ -11,7 +11,8 @@ import {
   addProductToShoppingList,
   deleteShoppingListItem,
   getShoppingListDetail,
-  updateShoppingListItem
+  updateShoppingListItem,
+  uncheckAllShoppingListItems
 } from "../services/shoppingListApi";
 
 import { getAllCategories } from "../services/categoriesApi";
@@ -94,6 +95,14 @@ function HomePage() {
     setShoppingListDetail(updateItemList);
   }
 
+  async function handleUncheckAll() {
+    if (!selectedListId) return;
+    const updatedList = await uncheckAllShoppingListItems(selectedListId);
+    setShoppingListDetail((current) =>
+      current?.id === updatedList.id ? updatedList : current
+    );
+  }
+
   return (
     <>
       <Header totalItemsCount={shoppingListDetail ? shoppingListDetail.total_count : "0"}
@@ -112,6 +121,7 @@ function HomePage() {
           onSelectList={handleListSelect}
           selectedListId={selectedListId}
           shoppingListDetail={shoppingListDetail}
+          onUncheckAll={handleUncheckAll}
         />
         {selectedListId && (
           <ProductSearch onAddProductToList={addProductToList} />

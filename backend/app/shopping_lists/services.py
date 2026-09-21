@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from backend.app.categories.models import CategoryTable
@@ -118,6 +118,18 @@ class ShoppingListService:
         self.db.add(item)
         self.db.commit()
 
+        return self.get_list_detail(shopping_list_id)
+
+    def uncheck_all(self, shopping_list_id: int):
+        if self.db.get(ShoppingListTable, shopping_list_id) is None:
+            return None
+
+        self.db.execute(
+            update(ShoppingListItemTable)
+            .where(ShoppingListItemTable.shopping_list_id == shopping_list_id)
+            .values(is_checked=False)
+        )
+        self.db.commit()
         return self.get_list_detail(shopping_list_id)
 
     def delete_item(self, shopping_list_id: int, item_id: int):

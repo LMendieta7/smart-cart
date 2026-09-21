@@ -25,26 +25,63 @@ The initial version remains simple and does not require authentication.
 Authentication, user ownership, and sharing will be added when the core
 shopping-list workflow is complete.
 
-## Backend
+## Run the App Locally
 
-Install dependencies:
+Open Docker Desktop first. Run the following commands from the project root.
+
+### Install dependencies
+
+For the first setup, create a Python virtual environment if `.venv` does not
+already exist:
+
+```bash
+python3 -m venv .venv
+```
+
+Install the backend and frontend dependencies:
 
 ```bash
 source .venv/bin/activate
 python -m pip install -r backend/requirements.txt
+npm --prefix frontend install
 ```
 
-Run the API:
+### Start the database
+
+Start the existing database container:
 
 ```bash
-python -m uvicorn backend.app.main:app --reload
+docker start smart_grocery_postgres
 ```
 
-API docs:
+If you have not created the database container yet, use:
 
-```text
-http://127.0.0.1:8000/docs
+```bash
+docker compose up -d
 ```
+
+### Start the backend
+
+In one terminal, from the project root:
+
+```bash
+.venv/bin/python -m uvicorn backend.app.main:app --reload
+```
+
+### Start the frontend
+
+In a second terminal, from the project root:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Keep both terminals running, then open [the app](http://localhost:5173).
+The [API docs](http://127.0.0.1:8000/docs) are also available.
+
+To stop the frontend and backend, press `Ctrl+C` in each terminal. To stop
+the database, run `docker stop smart_grocery_postgres`.
 
 ## Current Structure
 

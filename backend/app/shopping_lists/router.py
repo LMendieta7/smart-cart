@@ -125,3 +125,16 @@ def update_shopping_list(
         raise HTTPException(status_code=404, detail="List not found")
 
     return shopping_list
+
+@router.post(
+    "/shopping-lists/{shopping_list_id}/uncheck-all",
+    response_model=ShoppingListDetailResponse,
+)
+def uncheck_all_items(
+    shopping_list_id: int,
+    service: ShoppingListService = Depends(get_shopping_list_service),
+):
+    list_detail = service.uncheck_all(shopping_list_id)
+    if list_detail is None:
+        raise HTTPException(status_code=404, detail="Shopping list not found")
+    return list_detail

@@ -128,3 +128,14 @@ export async function deleteShoppingList(shoppingListId) {
   }
 
 }
+
+export async function uncheckAllShoppingListItems(shoppingListId) {
+  const response = await fetch(
+    `${API_BASE_URL}/shopping-lists/${shoppingListId}/uncheck-all`,
+    { method: "POST" },
+  );
+  if (!response.ok) {
+    throw new Error("Could not uncheck items. Please try again.");
+  }
+  return response.json();
+}

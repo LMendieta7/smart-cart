@@ -20,14 +20,31 @@ import EditIcon from "@mui/icons-material/Edit";
 import Divider from '@mui/material/Divider';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DeselectIcon from "@mui/icons-material/Deselect";
-import RemoveDoneIcon from "@mui/icons-material/RemoveDone";
+import Alert from "@mui/material/Alert";
+import Snackbar from "@mui/material/Snackbar";
 
 
 import ListDialog from "./dialogs/ListDialog";
 import DeleteListDialog from "./dialogs/DeleteListDialog";
 import ListIcon from '@mui/icons-material/List';
 
-function ListSelectorSection({ selectedListId, onSelectList}){
+function ListSelectorSection({ selectedListId, onSelectList, shoppingListDetail, onUncheckAll }){
+    const [isUnchecking, setIsUnchecking] = useState(false);
+    const [uncheckError, setUncheckError] = useState("");
+
+    async function handleUncheckAll() {
+        if (isUnchecking) return;
+        handleCloseMenu();
+        setIsUnchecking(true);
+        setUncheckError("");
+        try {
+            await onUncheckAll();
+        } catch (error) {
+            setUncheckError(error.message);
+        } finally {
+            setIsUnchecking(false);
+        }
+    }
     const [shoppingLists, setShoppingLists] = useState([]);
     const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
     const [isEditListDialogOpen, setIsEditListDialogOpen] = useState(false);
@@ -232,7 +249,10 @@ function ListSelectorSection({ selectedListId, onSelectList}){
                     <ListItemText>Edit list</ListItemText>
                 </MenuItem>
 
-                <MenuItem >
+                <MenuItem
+                    onClick={handleUncheckAll}
+                    disabled={isUnchecking || !selectedListId || shoppingListDetail?.id !== selectedListId || !shoppingListDetail?.checked_count}
+                >
                     <ListItemIcon>
                         <DeselectIcon fontSize="small" sx={{color:"darkGreen"}}></DeselectIcon>
                     </ListItemIcon>
@@ -264,6 +284,11 @@ function ListSelectorSection({ selectedListId, onSelectList}){
                 </MenuItem>
 
             </Menu>
+            <Snackbar open={Boolean(uncheckError)} onClose={() => setUncheckError("")}>
+                <Alert severity="error" onClose={() => setUncheckError("")}>
+                    {uncheckError}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }
